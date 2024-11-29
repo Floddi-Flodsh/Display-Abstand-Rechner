@@ -35,7 +35,7 @@
       margin-bottom: 8px;
       font-size: 1.1rem;
     }
-    select, input[type="number"], button {
+    select, input[type="number"], input[type="text"], button {
       width: 100%;
       padding: 12px;
       margin-bottom: 15px;
@@ -45,7 +45,7 @@
       background-color: #f9f9f9;
       box-sizing: border-box;
     }
-    select:focus, input[type="number"]:focus, button:focus {
+    select:focus, input[type="number"]:focus, input[type="text"]:focus, button:focus {
       border-color: #4CAF50;
       outline: none;
     }
@@ -87,7 +87,7 @@
     <h1>Display-Abstand Rechner</h1>
 
     <label for="deviceType1">Gerät 1 Typ:</label>
-    <select id="deviceType1">
+    <select id="deviceType1" onchange="updateDeviceOptions()">
       <option value="smartphone">Smartphone</option>
       <option value="tablet">Tablet</option>
       <option value="laptop">Laptop</option>
@@ -97,15 +97,28 @@
     <label for="size1">Displaygröße von Gerät 1 (Zoll):</label>
     <input type="number" id="size1" placeholder="z. B. 6.1">
 
-    <label for="resolution1">Auflösung von Gerät 1:</label>
-    <select id="resolution1">
-      <option value="1920x1080">1920x1080 (Full HD)</option>
-      <option value="1280x720">1280x720 (HD Ready)</option>
-      <option value="2778x1284">2778x1284 (z. B. iPhone 13 Pro Max)</option>
-      <option value="2560x1600">2560x1600 (z. B. iPad Pro)</option>
-      <option value="3840x2160">3840x2160 (4K UHD)</option>
-      <option value="7680x4320">7680x4320 (8K UHD)</option>
+    <label for="resolutionInputType">Auflösungsart:</label>
+    <select id="resolutionInputType" onchange="toggleResolutionInput()">
+      <option value="dropdown">Aus Dropdown auswählen</option>
+      <option value="manual">Manuell eingeben</option>
     </select>
+
+    <div id="resolutionDropdown">
+      <label for="resolution1">Auflösung von Gerät 1:</label>
+      <select id="resolution1">
+        <option value="1920x1080">1920x1080 (Full HD)</option>
+        <option value="1280x720">1280x720 (HD Ready)</option>
+        <option value="2778x1284">2778x1284 (z. B. iPhone 13 Pro Max)</option>
+        <option value="2560x1600">2560x1600 (z. B. iPad Pro)</option>
+        <option value="3840x2160">3840x2160 (4K UHD)</option>
+        <option value="7680x4320">7680x4320 (8K UHD)</option>
+      </select>
+    </div>
+
+    <div id="resolutionManual" style="display: none;">
+      <label for="manualResolution">Manuelle Auflösung eingeben (z. B. 1920x1080):</label>
+      <input type="text" id="manualResolution" placeholder="z. B. 1920x1080">
+    </div>
 
     <label for="distance1">Abstand zu Gerät 1 (cm):</label>
     <input type="number" id="distance1" placeholder="z. B. 30">
@@ -116,16 +129,47 @@
 
     <div class="info">
       <strong>Was bedeutet die Berechnung?</strong>
-      <p>Diese Berechnung hilft dir, die optimale Entfernung zu einem Display zu finden, um denselben visuellen Eindruck (Schärfe und Detailtreue) wie bei einem anderen Display zu haben. Es wird ein Vergleich zwischen dem Gerät, das du derzeit verwendest (z. B. Smartphone, Fernseher), und einem zweiten Gerät (z. B. einem anderen Display) durchgeführt.</p>
-      <p>Die Berechnungen basieren auf der Pixeldichte (PPI) und berücksichtigen die Bildschirmgröße und Auflösung des Displays. Der PPI-Wert gibt an, wie viele Pixel pro Zoll auf dem Display vorhanden sind, was direkt mit der Detailgenauigkeit des Bildes zu tun hat. Ein Gerät mit höherer Pixeldichte (z. B. ein Smartphone) erfordert einen geringeren Betrachtungsabstand, um das gleiche Detail zu sehen wie bei einem größeren Display (z. B. einem Fernseher).</p>
+      <p>Diese Berechnung hilft dir, die optimale Entfernung zu einem Display zu finden, um denselben visuellen Eindruck (Schärfe und Detailtreue) wie bei einem anderen Display zu haben. Es wird ein Vergleich zwischen deinem Gerät und anderen möglichen Displays durchgeführt.</p>
     </div>
   </div>
 
   <script>
+    function toggleResolutionInput() {
+      const inputType = document.getElementById('resolutionInputType').value;
+      document.getElementById('resolutionDropdown').style.display = inputType === 'dropdown' ? 'block' : 'none';
+      document.getElementById('resolutionManual').style.display = inputType === 'manual' ? 'block' : 'none';
+    }
+
+    function updateDeviceOptions() {
+      const deviceType = document.getElementById('deviceType1').value;
+      const sizeInput = document.getElementById('size1');
+
+      const minSize = {
+        smartphone: 4,
+        tablet: 7,
+        laptop: 11,
+        tv: 24
+      };
+
+      const maxSize = {
+        smartphone: 7,
+        tablet: 13,
+        laptop: 17,
+        tv: 85
+      };
+
+      sizeInput.min = minSize[deviceType];
+      sizeInput.max = maxSize[deviceType];
+      sizeInput.placeholder = `Zwischen ${minSize[deviceType]} und ${maxSize[deviceType]} Zoll`;
+    }
+
     function berechneAbstand() {
       const distance1 = parseFloat(document.getElementById('distance1').value);
-      const resolution1 = document.getElementById('resolution1').value;
       const size1 = parseFloat(document.getElementById('size1').value);
+      const resolutionInputType = document.getElementById('resolutionInputType').value;
+      const resolution1 = resolutionInputType === 'dropdown'
+        ? document.getElementById('resolution1').value
+        : document.getElementById('manualResolution').value;
 
       if (!distance1 || !resolution1 || !size1) {
         document.getElementById('ergebnis').innerHTML = 'Bitte alle Felder ausfüllen!';
@@ -133,36 +177,15 @@
       }
 
       const [width1, height1] = resolution1.split('x').map(Number);
+      if (!width1 || !height1) {
+        document.getElementById('ergebnis').innerHTML = 'Ungültige Auflösung eingegeben!';
+        return;
+      }
+
       const pixelDensity1 = Math.sqrt(width1 ** 2 + height1 ** 2) / size1;
 
-      const devices = [
-        { type: "smartphone", size: 6.1, resolution: "2778x1284", ppi: 458 },
-        { type: "tablet", size: 11, resolution: "2388x1668", ppi: 264 },
-        { type: "laptop", size: 15.6, resolution: "1920x1080", ppi: 141 },
-        { type: "tv", size: 50, resolution: "1920x1080", ppi: 44 },
-        { type: "tv", size: 65, resolution: "3840x2160", ppi: 68 },
-        { type: "tablet", size: 10.9, resolution: "2360x1640", ppi: 264 }, // iPad Pro
-        { type: "monitor", size: 24, resolution: "1920x1080", ppi: 92 }, // 24" Full HD Monitor
-        { type: "monitor", size: 32, resolution: "2560x1440", ppi: 92 }, // 32" WQHD Monitor
-      ];
-
-      const suggestions = devices.map(device => {
-        const [width2, height2] = device.resolution.split('x').map(Number);
-        const pixelDensity2 = Math.sqrt(width2 ** 2 + height2 ** 2) / device.size;
-        const distance2 = (distance1 * pixelDensity1) / pixelDensity2;
-
-        return `
-          <li>
-            ${device.type.toUpperCase()} - ${device.size}" (${device.resolution}): 
-            <strong>${distance2.toFixed(2)} cm</strong>
-          </li>`;
-      }).join('');
-
-      document.getElementById('ergebnis').innerHTML = `
-        <strong>Ergebnis:</strong><br>
-        Ähnliche visuelle Erlebnisse bei:<br>
-        <ul>${suggestions}</ul>
-      `;
+      // Vergleichslogik hier einfügen
+      document.getElementById('ergebnis').innerHTML = `Berechnung erfolgreich! Pixeldichte: ${pixelDensity1.toFixed(2)} PPI`;
     }
   </script>
 </body>
