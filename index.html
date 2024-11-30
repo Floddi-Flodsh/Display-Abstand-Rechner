@@ -80,6 +80,14 @@
     li {
       margin: 10px 0;
     }
+    .formeln {
+      margin-top: 40px;
+      font-size: 1rem;
+      color: #333;
+    }
+    .formeln h2 {
+      color: #4CAF50;
+    }
   </style>
 </head>
 <body>
@@ -129,7 +137,35 @@
 
     <div class="info">
       <strong>Was bedeutet die Berechnung?</strong>
-      <p>Diese Berechnung hilft dir, die optimale Entfernung zu einem Display zu finden, um denselben visuellen Eindruck (Schärfe und Detailtreue) wie bei einem anderen Display zu haben. Es wird ein Vergleich zwischen deinem Gerät und anderen möglichen Displays durchgeführt.</p>
+      <p>Die Berechnung zeigt dir, wie sich der Abstand zu einem Display in Bezug auf dessen Auflösung und Pixeldichte verhält. So kannst du vergleichen, wie das visuelle Erlebnis aus verschiedenen Entfernungen wirkt.</p>
+    </div>
+
+    <div class="formeln">
+      <h2>Verwendete Formeln:</h2>
+      <p><strong>1. Berechnung der Pixeldichte (PPI):</strong></p>
+      <p>Die Pixeldichte (PPI) eines Displays wird mit der folgenden Formel berechnet:</p>
+      <pre>
+        PPI = √(Breite² + Höhe²) / Diagonale
+      </pre>
+      <p>Wobei:</p>
+      <ul>
+        <li><strong>Breite</strong> = Pixelanzahl in horizontaler Richtung</li>
+        <li><strong>Höhe</strong> = Pixelanzahl in vertikaler Richtung</li>
+        <li><strong>Diagonale</strong> = Diagonale des Displays in Zoll</li>
+      </ul>
+
+      <p><strong>2. Berechnung des Abstands für ein anderes Display:</strong></p>
+      <p>Um den Abstand für ein anderes Display zu berechnen, verwenden wir den folgenden Zusammenhang:</p>
+      <pre>
+        Abstand2 = (Abstand1 * PPI1) / PPI2
+      </pre>
+      <p>Wobei:</p>
+      <ul>
+        <li><strong>Abstand1</strong> = Der angegebene Abstand zum ersten Display (in cm)</li>
+        <li><strong>PPI1</strong> = Pixeldichte des ersten Displays</li>
+        <li><strong>Abstand2</strong> = Der berechnete Abstand zum zweiten Display (in cm)</li>
+        <li><strong>PPI2</strong> = Pixeldichte des zweiten Displays</li>
+      </ul>
     </div>
   </div>
 
@@ -184,8 +220,32 @@
 
       const pixelDensity1 = Math.sqrt(width1 ** 2 + height1 ** 2) / size1;
 
-      // Vergleichslogik hier einfügen
-      document.getElementById('ergebnis').innerHTML = `Berechnung erfolgreich! Pixeldichte: ${pixelDensity1.toFixed(2)} PPI`;
+      const exampleDisplays = [
+        { name: 'Smartphone - 6.1" (2778x1284)', size: 6.1, resolution: '2778x1284' },
+        { name: 'Tablet - 11" (2388x1668)', size: 11, resolution: '2388x1668' },
+        { name: 'Laptop - 15.6" (1920x1080)', size: 15.6, resolution: '1920x1080' },
+        { name: 'TV - 50" (1920x1080)', size: 50, resolution: '1920x1080' },
+        { name: 'TV - 65" (3840x2160)', size: 65, resolution: '3840x2160' },
+        { name: 'Tablet - 10.9" (2360x1640)', size: 10.9, resolution: '2360x1640' },
+        { name: 'Monitor - 24" (1920x1080)', size: 24, resolution: '1920x1080' },
+        { name: 'Monitor - 32" (2560x1440)', size: 32, resolution: '2560x1440' }
+      ];
+
+      const suggestions = exampleDisplays.map(device => {
+        const [width2, height2] = device.resolution.split('x').map(Number);
+        const pixelDensity2 = Math.sqrt(width2 ** 2 + height2 ** 2) / device.size;
+        const distance2 = (distance1 * pixelDensity1) / pixelDensity2;
+        return `
+          <li>
+            ${device.name}: Abstand: ${distance2.toFixed(2)} cm (Pixeldichte: ${pixelDensity2.toFixed(2)} PPI)
+          </li>
+        `;
+      }).join('');
+
+      document.getElementById('ergebnis').innerHTML = `
+        <p><strong>Bei Verwendung deines Geräts (${size1}" - Auflösung: ${resolution1}) aus ${distance1} cm Entfernung, entspricht das visuelle Erlebnis ungefähr den folgenden Geräten:</strong></p>
+        <ul>${suggestions}</ul>
+      `;
     }
   </script>
 </body>
